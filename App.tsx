@@ -1,21 +1,46 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import {
+  NavigationContainer,
+  DarkTheme as NavigationDarkTheme,
+} from "@react-navigation/native";
+import { createMaterialBottomTabNavigator } from "@react-navigation/material-bottom-tabs";
+import { Provider as PaperProvider, DarkTheme } from "react-native-paper";
+import merge from "deepmerge";
+import MaterialIcon from "react-native-vector-icons/MaterialIcons";
+import FlashMessage from "react-native-flash-message";
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+import Home from "./components/Home/Home";
+
+const Tab = createMaterialBottomTabNavigator();
+
+export default class App extends React.Component<any, any> {
+  darkTheme: any;
+
+  constructor(props: any) {
+    super(props);
+    this.darkTheme = merge(NavigationDarkTheme, DarkTheme);
+  }
+  render() {
+    return (
+      <PaperProvider theme={this.darkTheme}>
+        <StatusBar style={"light"} />
+        <NavigationContainer theme={this.darkTheme}>
+          <Tab.Navigator initialRouteName={"Home"}>
+            <Tab.Screen
+              name="Home"
+              component={Home}
+              options={{
+                tabBarLabel: "Główna",
+                tabBarIcon: () => (
+                  <MaterialIcon name="home-filled" color={"white"} size={26} />
+                ),
+              }}
+            />
+          </Tab.Navigator>
+        </NavigationContainer>
+        <FlashMessage position="top" />
+      </PaperProvider>
+    );
+  }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
