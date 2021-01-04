@@ -7,7 +7,7 @@ import {
 import { createMaterialBottomTabNavigator } from "@react-navigation/material-bottom-tabs";
 import { Provider as PaperProvider, DarkTheme } from "react-native-paper";
 import merge from "deepmerge";
-import MaterialIcon from "react-native-vector-icons/MaterialIcons";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import FlashMessage from "react-native-flash-message";
 
 import Home from "./components/Home/Home";
@@ -33,7 +33,7 @@ export default class App extends React.Component<any, any> {
               options={{
                 tabBarLabel: "Główna",
                 tabBarIcon: () => (
-                  <MaterialIcon name="home-filled" color={"white"} size={26} />
+                  <MaterialIcons name="home-filled" color={"white"} size={26} />
                 ),
               }}
             />

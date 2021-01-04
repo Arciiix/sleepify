@@ -10,6 +10,12 @@ export default StyleSheet.create({
     color: textColor,
   },
   time: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  timeText: {
     color: textColor,
     fontSize: 100,
   },
