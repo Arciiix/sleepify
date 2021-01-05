@@ -1,15 +1,10 @@
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedbackBase,
-  View,
-} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { showMessage } from "react-native-flash-message";
 import { withTheme } from "react-native-paper";
-import { parse } from "react-native-svg";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { Switch } from "react-native-paper";
 
 import styles from "./Home.styles";
 
@@ -176,14 +171,7 @@ class Home extends React.Component<any, HomeState> {
           {() => {
             return (
               <>
-                <Text
-                  style={[
-                    styles.alarmHour,
-                    { color: this.state.isAlarmActive ? "white" : "#919191" },
-                  ]}
-                >
-                  {this.state.alarmTime}
-                </Text>
+                <Text style={styles.alarmHour}>{this.state.alarmTime}</Text>
                 {this.state.isAlarmActive ? (
                   <View style={styles.alarmIcons}>
                     <MaterialCommunityIcons
@@ -214,19 +202,14 @@ class Home extends React.Component<any, HomeState> {
                   <View style={styles.alarmIcons}>
                     <MaterialCommunityIcons
                       name={"alarm-off"}
-                      color={"#919191"}
+                      color={"white"}
                       size={50}
                       style={styles.alarmIcon}
                     />
                   </View>
                 )}
 
-                <Text
-                  style={[
-                    styles.alarmTimeLeft,
-                    { color: this.state.isAlarmActive ? "white" : "#919191" },
-                  ]}
-                >
+                <Text style={styles.alarmTimeLeft}>
                   za {this.state.timeUntilAlarm}
                 </Text>
               </>
