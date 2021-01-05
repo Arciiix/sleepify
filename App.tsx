@@ -25,6 +25,7 @@ export default class App extends React.Component<any, any> {
     return (
       <PaperProvider theme={this.darkTheme}>
         <StatusBar style={"light"} />
+        <FlashMessage position="top" />
         <NavigationContainer theme={this.darkTheme}>
           <Tab.Navigator initialRouteName={"Home"}>
             <Tab.Screen
@@ -39,7 +40,6 @@ export default class App extends React.Component<any, any> {
             />
           </Tab.Navigator>
         </NavigationContainer>
-        <FlashMessage position="top" />
       </PaperProvider>
     );
   }

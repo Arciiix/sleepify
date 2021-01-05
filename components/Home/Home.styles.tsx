@@ -19,4 +19,32 @@ export default StyleSheet.create({
     color: textColor,
     fontSize: 100,
   },
+  alarmView: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "white",
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    borderColor: "white",
+    borderWidth: 5,
+  },
+  alarmHour: {
+    color: "white",
+    fontSize: 90,
+  },
+  alarmIcons: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alarmIcon: {
+    margin: 5,
+  },
+  alarmTimeLeft: {
+    color: "white",
+    fontSize: 30,
+  },
 });
