@@ -161,8 +161,8 @@ class Home extends React.Component<any, HomeState> {
         </View>
 
         <AnimatedCircularProgress
-          size={300}
-          width={6}
+          size={310}
+          width={10}
           fill={this.state.chartPercent}
           rotation={this.state.chartRotation}
           tintColor={this.state.isAlarmActive ? "#0781fa" : "#004080"}
