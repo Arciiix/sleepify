@@ -1,12 +1,15 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Switch } from "react-native";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { showMessage } from "react-native-flash-message";
 import { withTheme } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { Switch } from "react-native-paper";
 
 import styles from "./Home.styles";
+
+//DEV
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["Your project is accessing the following APIs"]);
 
 interface HomeState {
   time: string;
@@ -17,11 +20,13 @@ interface HomeState {
   isSnoozeEnabled?: boolean;
   timeUntilAlarm: string;
   temperature: number;
+  temperatureRange: { min: number; max: number };
   isConnected?: boolean;
   isLoading: boolean;
   chartRotation: number;
   chartPercent: number;
   difference: string;
+  isTheAlarmSwitchingNow: boolean;
 }
 
 enum numbersInWords {
@@ -51,11 +56,13 @@ class Home extends React.Component<any, HomeState> {
       isSnoozeEnabled: false,
       timeUntilAlarm: "",
       temperature: 0,
+      temperatureRange: { min: 20, max: 24 },
       isConnected: false,
       isLoading: true,
       chartRotation: 0,
       chartPercent: 0,
       difference: "00:00",
+      isTheAlarmSwitchingNow: false,
     };
   }
 
@@ -68,6 +75,30 @@ class Home extends React.Component<any, HomeState> {
 
   addZero(number: number): string {
     return number < 10 ? `0${number}` : `${number}`;
+  }
+  async switchTheAlarm(isTurnedOn: boolean): Promise<void> {
+    await new Promise((resolve) =>
+      this.setState({ isTheAlarmSwitchingNow: true }, resolve)
+    );
+    //DEV
+    //TODO: Turn on/off the alarm
+
+    this.setState({ isAlarmActive: isTurnedOn, isTheAlarmSwitchingNow: false });
+  }
+
+  getTemperatureRangeColor(): string {
+    let temperature: number = this.state.temperature;
+    let { min, max } = this.state.temperatureRange;
+
+    let color: string = "#23C162";
+
+    if (temperature < min) {
+      color = "#1273a3";
+    } else if (temperature > max) {
+      color = "#db6d0d";
+    }
+
+    return color;
   }
 
   componentDidMount(): void {
@@ -85,14 +116,15 @@ class Home extends React.Component<any, HomeState> {
     });
 
     //DEV
+    //TODO: Fetch them from the server
     let currentTime: string = "12:00";
-    let alarmTime: string = "15:00";
+    let alarmTime: string = "13:00";
 
     let parsedCurrentTime: { hour: number; minute: number } = this.parseTime(
       currentTime
     );
 
-    let timeWord: number = parsedCurrentTime.hour; //DEV TODO: get it from the current time
+    let timeWord: number = parsedCurrentTime.hour;
     if (timeWord >= 12) {
       timeWord -= 12;
     }
@@ -140,11 +172,13 @@ class Home extends React.Component<any, HomeState> {
       isQRCodeEnabled: true,
       isSnoozeEnabled: true,
       timeUntilAlarm: differenceText,
-      temperature: 21.45,
+      temperature: 22.45,
+      temperatureRange: { min: 20, max: 24 },
       isConnected: isConnected,
       isLoading: false,
       chartRotation: rotation,
       chartPercent: percent,
+      isTheAlarmSwitchingNow: false,
     });
   }
 
@@ -155,7 +189,7 @@ class Home extends React.Component<any, HomeState> {
           <MaterialCommunityIcons
             name={`clock-time-${this.state.timeWord}-outline`}
             color={"white"}
-            size={100}
+            size={80}
           />
           <Text style={styles.timeText}>{this.state.time}</Text>
         </View>
@@ -216,6 +250,25 @@ class Home extends React.Component<any, HomeState> {
             );
           }}
         </AnimatedCircularProgress>
+        <Switch
+          trackColor={{
+            true: this.state.isAlarmActive ? "#7ac5cf" : "#b0003e",
+            false: this.state.isAlarmActive ? "#7ac5cf" : "#b0003e",
+          }} //We want it to be synchronized - turning alarm takes some time
+          thumbColor={this.state.isAlarmActive ? "#0099ff" : "#ffffff"}
+          onValueChange={this.switchTheAlarm.bind(this)}
+          disabled={this.state.isTheAlarmSwitchingNow}
+          value={this.state.isAlarmActive}
+          style={styles.switch}
+        />
+        <Text
+          style={[
+            styles.temperature,
+            { color: this.getTemperatureRangeColor() },
+          ]}
+        >
+          {this.state.temperature}°C
+        </Text>
       </View>
     );
   }

@@ -14,10 +14,11 @@ export default StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 15,
   },
   timeText: {
     color: textColor,
-    fontSize: 100,
+    fontSize: 80,
   },
   alarmView: {
     display: "flex",
@@ -46,5 +47,15 @@ export default StyleSheet.create({
   alarmTimeLeft: {
     color: "white",
     fontSize: 30,
+  },
+  switch: {
+    marginTop: 40,
+    transform: [{ scale: 3.5 }],
+  },
+
+  temperature: {
+    marginTop: 20,
+    fontSize: 80,
+    textAlign: "center",
   },
 });
