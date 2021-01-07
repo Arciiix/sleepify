@@ -101,19 +101,29 @@ class Home extends React.Component<any, HomeState> {
     return color;
   }
 
-  componentDidMount(): void {
+  async componentDidMount(): Promise<void> {
+    await this.getData();
+
+    this.props.navigation.addListener("tabPress", (e: any) => {
+      this.getData(); //Refresh the data when user clicks on the BottomNavigation button
+    });
+  }
+
+  async getData(): Promise<any> {
     //DEV
     //TODO: Connect to the server
     //If the connection has failed
     let isConnected = false;
 
-    showMessage({
-      message: "Nie połączono się z serwerem!",
-      type: "danger",
-      autoHide: false,
-      floating: true,
-      icon: "danger",
-    });
+    if (!isConnected) {
+      showMessage({
+        message: "Nie połączono się z serwerem!",
+        type: "danger",
+        autoHide: false,
+        floating: true,
+        icon: "danger",
+      });
+    }
 
     //DEV
     //TODO: Fetch them from the server
