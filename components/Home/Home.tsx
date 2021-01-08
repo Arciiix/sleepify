@@ -1,8 +1,8 @@
 import React from "react";
-import { StyleSheet, Text, View, Switch } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { showMessage } from "react-native-flash-message";
-import { withTheme } from "react-native-paper";
+import { withTheme, Switch } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 import styles from "./Home.styles";
@@ -173,6 +173,8 @@ class Home extends React.Component<any, HomeState> {
       Math.floor(difference / 60)
     )}:${this.addZero(difference % 60)}`;
 
+    //TODO: Fix the differenceText - when the difference is 0, it's "0-1:0-1" because we subtract 1 from it!
+
     //DEV
     this.setState({
       time: currentTime,
@@ -270,6 +272,14 @@ class Home extends React.Component<any, HomeState> {
           disabled={this.state.isTheAlarmSwitchingNow}
           value={this.state.isAlarmActive}
           style={styles.switch}
+          accessibilityTraits={"switch"}
+          accessibilityComponentType={"switch"}
+          accessibilityRole={"switch"}
+          accessibilityState={{
+            selected: this.state.isAlarmActive,
+            busy: this.state.isTheAlarmSwitchingNow,
+          }}
+          accessibilityLabel={"Switch the alarm state"}
         />
         <Text
           style={[

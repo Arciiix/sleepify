@@ -11,6 +11,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import FlashMessage from "react-native-flash-message";
 
 import Home from "./components/Home/Home";
+import SetAlarm from "./components/SetAlarm/SetAlarm";
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -35,6 +36,16 @@ export default class App extends React.Component<any, any> {
                 tabBarLabel: "Główna",
                 tabBarIcon: () => (
                   <MaterialIcons name="home-filled" color={"white"} size={26} />
+                ),
+              }}
+            />
+            <Tab.Screen
+              name="Alarm"
+              component={SetAlarm}
+              options={{
+                tabBarLabel: "Budzik",
+                tabBarIcon: () => (
+                  <MaterialIcons name="add-alarm" color={"white"} size={26} />
                 ),
               }}
             />
