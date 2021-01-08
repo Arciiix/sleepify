@@ -1,6 +1,13 @@
 import React from "react";
 import { StyleSheet, Text, View, ScrollView, Pressable } from "react-native";
-import { Button, TextInput, withTheme, Switch } from "react-native-paper";
+import {
+  Button,
+  TextInput,
+  withTheme,
+  Switch,
+  Dialog,
+  Portal,
+} from "react-native-paper";
 import { hideMessage, showMessage } from "react-native-flash-message";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -8,7 +15,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import equal from "fast-deep-equal";
 
 import styles from "./SetAlarm.styles";
-import { createIconSetFromFontello } from "react-native-vector-icons";
 
 interface SetAlarmState {
   currentTime: { hour: number; minute: number };
@@ -27,6 +33,8 @@ interface SetAlarmState {
   isSelectingTime: boolean;
   alarmInDate: Date; //Used in TimePicker
   hasTheUnsavedChangesAlertBeenShown: boolean;
+  isSelectingSnoozeLength: boolean;
+  snoozeLengthText: string; //Used in Prompt dialog (selecting snooze length)
 }
 
 class SetAlarm extends React.Component<any, SetAlarmState> {
@@ -52,6 +60,8 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
       isSelectingTime: false,
       alarmInDate: new Date(),
       hasTheUnsavedChangesAlertBeenShown: false,
+      isSelectingSnoozeLength: false,
+      snoozeLengthText: "",
     };
     this.scrollRef = React.createRef();
   }
@@ -113,6 +123,14 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
       hideMessage();
       this.setState({ hasTheUnsavedChangesAlertBeenShown: false });
     }
+
+    //DEV
+    console.log("\n");
+    console.log(`isEqual: ${isEqual}`);
+    console.log(`Current state:`);
+    console.log(JSON.stringify(this.state));
+    console.log(`Initial state:`);
+    console.log(JSON.stringify(this.initialState));
   }
 
   updateChart(): {
@@ -197,6 +215,12 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
         });
       }
     );
+  }
+
+  handleSnoozeLengthInputChange(text: string): void {
+    if (/^\d+$/.test(text.toString())) {
+      this.setState({ snoozeLengthText: text });
+    }
   }
 
   render() {
@@ -284,30 +308,87 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
               </Text>
             )}
 
-            <View style={styles.option}>
-              <View style={styles.description}>
-                <MaterialCommunityIcons
-                  name={"alarm-snooze"}
-                  color={"white"}
-                  style={styles.optionIcon}
+            <Pressable
+              onPress={() => {
+                if (this.state.isSnoozeEnabled)
+                  this.setState({ isSelectingSnoozeLength: true });
+              }}
+            >
+              <View style={styles.option}>
+                <View style={styles.description}>
+                  <MaterialCommunityIcons
+                    name={"alarm-snooze"}
+                    color={"white"}
+                    style={styles.optionIcon}
+                  />
+                  <Text style={styles.optionText}>Drzemka</Text>
+                </View>
+                <Switch
+                  style={styles.switch}
+                  accessibilityTraits={"switch"}
+                  accessibilityComponentType={"switch"}
+                  value={this.state.isSnoozeEnabled}
+                  onValueChange={(v) => this.setState({ isSnoozeEnabled: v })}
+                  disabled={true /* DEV - coming soon*/}
                 />
-                <Text style={styles.optionText}>Drzemka</Text>
               </View>
-              <Switch
-                style={styles.switch}
-                accessibilityTraits={"switch"}
-                accessibilityComponentType={"switch"}
-                value={this.state.isSnoozeEnabled}
-                onValueChange={(v) => this.setState({ isSnoozeEnabled: v })}
-                disabled={true /* DEV - coming soon*/}
-              />
-            </View>
-            {this.state.isSnoozeEnabled && (
-              <Text style={styles.additionalText}>
-                Minut: {this.state.snoozeLength}{" "}
-                {/* TODO: It should be  x minut/minutę/minuty - in good form of Polish */}
-              </Text>
-            )}
+              {this.state.isSnoozeEnabled && (
+                <Text style={styles.additionalText}>
+                  Minut: {this.state.snoozeLength}{" "}
+                  {/* TODO: It should be  x minut/minutę/minuty - in good form of Polish */}
+                </Text>
+              )}
+            </Pressable>
+
+            <Portal>
+              <Dialog visible={this.state.isSelectingSnoozeLength}>
+                <Dialog.Title
+                  accessibilityTraits={"title"}
+                  accessibilityComponentType={"title"}
+                >
+                  Drzemka
+                </Dialog.Title>
+                <Dialog.Content>
+                  <TextInput
+                    mode={"flat"}
+                    label="Wybierz długość drzemki (min)"
+                    keyboardType={"number-pad"}
+                    accessibilityTraits={"input"}
+                    accessibilityComponentType={"input"}
+                    value={this.state.snoozeLengthText}
+                    onChangeText={this.handleSnoozeLengthInputChange.bind(this)}
+                  />
+                </Dialog.Content>
+                <Dialog.Actions>
+                  <Button
+                    accessibilityTraits={"button"}
+                    accessibilityComponentType={"button"}
+                    onPress={() =>
+                      this.setState({
+                        isSelectingSnoozeLength: false,
+                        snoozeLengthText: "",
+                      })
+                    }
+                  >
+                    Anuluj
+                  </Button>
+                  <Button
+                    accessibilityTraits={"button"}
+                    accessibilityComponentType={"button"}
+                    onPress={() => {
+                      if (this.state.snoozeLengthText !== "")
+                        this.setState({
+                          isSelectingSnoozeLength: false,
+                          snoozeLengthText: "",
+                          snoozeLength: parseInt(this.state.snoozeLengthText),
+                        });
+                    }}
+                  >
+                    Zatwierdź
+                  </Button>
+                </Dialog.Actions>
+              </Dialog>
+            </Portal>
 
             <TextInput
               style={styles.message}
