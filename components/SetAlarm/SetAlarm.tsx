@@ -1,12 +1,14 @@
 import React from "react";
 import { StyleSheet, Text, View, ScrollView, Pressable } from "react-native";
 import { Button, TextInput, withTheme, Switch } from "react-native-paper";
-import { showMessage } from "react-native-flash-message";
+import { hideMessage, showMessage } from "react-native-flash-message";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import equal from "fast-deep-equal";
 
 import styles from "./SetAlarm.styles";
+import { createIconSetFromFontello } from "react-native-vector-icons";
 
 interface SetAlarmState {
   currentTime: { hour: number; minute: number };
@@ -24,15 +26,17 @@ interface SetAlarmState {
   isSaving: boolean; //True when the data is being sent to the server
   isSelectingTime: boolean;
   alarmInDate: Date; //Used in TimePicker
+  hasTheUnsavedChangesAlertBeenShown: boolean;
 }
 
 class SetAlarm extends React.Component<any, SetAlarmState> {
   private scrollRef: any;
+  private initialState: SetAlarmState | any;
 
   constructor(props: any) {
     super(props);
     this.state = {
-      currentTime: { hour: 15, minute: 23 },
+      currentTime: { hour: 0, minute: 0 },
       alarmTime: { hour: 0, minute: 1 },
       hasUnsavedChanges: false,
       chartRotation: 0,
@@ -47,6 +51,7 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
       isSaving: false,
       isSelectingTime: false,
       alarmInDate: new Date(),
+      hasTheUnsavedChangesAlertBeenShown: false,
     };
     this.scrollRef = React.createRef();
   }
@@ -56,30 +61,58 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
   }
 
   componentDidMount() {
-    showMessage({
-      message: "Masz niezapisane zmiany!",
-      type: "warning",
-      icon: "warning",
-      hideOnPress: false,
-      autoHide: false,
-    });
-
     //DEV
     //TODO: Fetch the current time and alarm time
 
     let chartObj: Partial<SetAlarmState> = this.updateChart();
 
-    this.setState((prevState) => {
-      return { ...prevState, ...chartObj };
-    });
+    this.setState(
+      (prevState) => {
+        return { ...prevState, ...chartObj };
+      },
+      () => {
+        //Save the initial state - we want to show the notification when user makes a change (we make a COPY of object, because it's reference type)
+        this.initialState = { ...this.state };
+      }
+    );
 
     //TODO: When user clicks on the BottomNavigation icon, move the ScrollView to the top
   }
 
   componentDidUpdate() {
-    let chartObj: Partial<SetAlarmState> = this.updateChart();
+    if (!this.initialState) return; //Usually true when the app didn't render yet
 
-    //TODO: Find how to compare objects in JavaScript
+    let isEqual: boolean = equal(
+      {
+        ...this.initialState,
+        ...{
+          hasTheUnsavedChangesAlertBeenShown: undefined,
+          alarmInDate: undefined,
+        },
+      },
+      {
+        ...this.state,
+        ...{
+          hasTheUnsavedChangesAlertBeenShown: undefined,
+          alarmInDate: undefined,
+        },
+      }
+    );
+    //We don't want to compare the hasTheUnsavedChangesAlertBeenShown and alarmInDate (because it's set to current time at default, and we have alarmTime object, so it's better to compare it), so we create the copy of object with them set to undefined
+
+    if (!isEqual && !this.state.hasTheUnsavedChangesAlertBeenShown) {
+      this.setState({ hasTheUnsavedChangesAlertBeenShown: true });
+      showMessage({
+        message: "Masz niezapisane zmiany!",
+        type: "warning",
+        icon: "warning",
+        hideOnPress: false,
+        autoHide: false,
+      });
+    } else if (isEqual && this.state.hasTheUnsavedChangesAlertBeenShown) {
+      hideMessage();
+      this.setState({ hasTheUnsavedChangesAlertBeenShown: false });
+    }
   }
 
   updateChart(): {
