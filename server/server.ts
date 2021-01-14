@@ -83,8 +83,8 @@ class Alarm {
     if (minute < 0 || minute > 59)
       return { err: true, message: `WRONG_MINUTE_${minute}` };
 
-    let fixedHour: string = this.addZero(hour);
-    let fixedMinute: string = this.addZero(minute);
+    let fixedHour: string = addZero(hour);
+    let fixedMinute: string = addZero(minute);
 
     /*
    DEV
@@ -101,10 +101,6 @@ class Alarm {
 
     */
     return { err: false };
-  }
-
-  addZero(number: number): string {
-    return number < 10 ? `0${number}` : `${number}`;
   }
 }
 
@@ -128,8 +124,6 @@ app.get("/getData", async (req, res) => {
 });
 
 app.post("/setAlarm", async (req, res) => {
-  console.log(req.body);
-
   const validData = [
     "hour",
     "minute",
@@ -159,6 +153,31 @@ app.post("/setAlarm", async (req, res) => {
   //DEV
   //TODO: Handle other properties (such as isQRCodeEnabled)
 
+  //It's very important to make sure this matches the AlarmData class - IF IT DOES NOT, THERE'S UNHANDLED ERROR
+  let wantedProperties: Array<string> = [
+    "alarmTime",
+    "isAlarmActive",
+    "isQRCodeEnabled",
+    "isSnoozeEnabled",
+    "snoozeLength",
+    "message",
+  ];
+
+  let newObj: Partial<AlarmData> = {};
+
+  wantedProperties.forEach((e) => {
+    if (Object.keys(req.body).includes(e)) {
+      newObj[e] = req.body[e];
+    }
+  });
+
+  for (const [key, value] of Object.entries(newObj)) {
+    AlarmdataObject.data[key] = value;
+  }
+  AlarmdataObject.data.alarm = `${addZero(newObj.alarmTime.hour)}:${addZero(
+    newObj.alarmTime.minute
+  )}`;
+
   //Hour and minute have to be a string, because 0 == false, and we don't want it
   let isSuccess: {
     err: boolean;
@@ -170,6 +189,10 @@ app.post("/setAlarm", async (req, res) => {
 
   res.send(isSuccess);
 });
+
+function addZero(number: number): string {
+  return number < 10 ? `0${number}` : `${number}`;
+}
 
 app.listen(PORT, () => {
   log(`App has started on port ${PORT}`);
