@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, TouchableWithoutFeedbackBase } from "react-native";
 
 const optionTextSize = 40;
 
@@ -71,5 +71,9 @@ export default StyleSheet.create({
   },
   submit: {
     marginBottom: 20,
+  },
+  dialogText: {
+    color: "white",
+    fontSize: 15,
   },
 });

@@ -1,5 +1,12 @@
 import React from "react";
-import { StyleSheet, Text, View, ScrollView, Pressable } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Pressable,
+  RefreshControl,
+} from "react-native";
 import {
   Button,
   TextInput,
@@ -35,6 +42,8 @@ interface SetAlarmState {
   hasTheUnsavedChangesAlertBeenShown: boolean;
   isSelectingSnoozeLength: boolean;
   snoozeLengthText: string; //Used in Prompt dialog (selecting snooze length)
+  isRefreshConfirmationDialogOpened: boolean;
+  isLoading: boolean;
 }
 
 class SetAlarm extends React.Component<any, SetAlarmState> {
@@ -62,6 +71,8 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
       hasTheUnsavedChangesAlertBeenShown: false,
       isSelectingSnoozeLength: false,
       snoozeLengthText: "",
+      isRefreshConfirmationDialogOpened: false,
+      isLoading: true,
     };
     this.scrollRef = React.createRef();
   }
@@ -70,9 +81,12 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
     return number < 10 ? `0${number}` : `${number}`;
   }
 
-  componentDidMount() {
+  async componentDidMount() {
+    //TODO: Don't download data everywhere - just download it once and then pass it to the children components of App
+    await this.getData();
     //DEV
-    //TODO: Fetch the current time and alarm time
+    //TODO: Create the loading page - the render method will check if some data has been already fetched (then it will render normal screen) or no (then it will display loading page)
+    this.setState({ isLoading: false }); //DEV
 
     let chartObj: Partial<SetAlarmState> = this.updateChart();
 
@@ -98,6 +112,8 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
         ...{
           hasTheUnsavedChangesAlertBeenShown: undefined,
           alarmInDate: undefined,
+          isRefreshConfirmationDialogOpened: undefined,
+          isLoading: undefined,
         },
       },
       {
@@ -105,10 +121,12 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
         ...{
           hasTheUnsavedChangesAlertBeenShown: undefined,
           alarmInDate: undefined,
+          isRefreshConfirmationDialogOpened: undefined,
+          isLoading: undefined,
         },
       }
     );
-    //We don't want to compare the hasTheUnsavedChangesAlertBeenShown and alarmInDate (because it's set to current time at default, and we have alarmTime object, so it's better to compare it), so we create the copy of object with them set to undefined
+    //We don't want to compare the hasTheUnsavedChangesAlertBeenShown, isRefreshConfirmationDialogOpened, isLoading and alarmInDate  (because it's set to current time at default, and we have alarmTime object, so it's better to compare it), so we create the copy of object with them set to undefined
 
     if (!isEqual && !this.state.hasTheUnsavedChangesAlertBeenShown) {
       this.setState({ hasTheUnsavedChangesAlertBeenShown: true });
@@ -183,6 +201,11 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
     };
   }
 
+  async getData(): Promise<void> {
+    //DEV
+    //TODO: Get data from the server
+  }
+
   async saveData(): Promise<void> {
     //DEV
     //TODO: Save data (send it to the server)
@@ -225,8 +248,55 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
 
   render() {
     return (
-      <ScrollView style={styles.scroll} ref={this.scrollRef}>
+      <ScrollView
+        style={styles.scroll}
+        ref={this.scrollRef}
+        refreshControl={
+          <RefreshControl
+            refreshing={this.state.isLoading}
+            onRefresh={() =>
+              this.setState({ isRefreshConfirmationDialogOpened: true })
+            }
+          />
+        }
+      >
         <View style={styles.container}>
+          <Portal>
+            <Dialog visible={this.state.isRefreshConfirmationDialogOpened}>
+              <Dialog.Title
+                accessibilityComponentType="confirmation"
+                accessibilityTraits="confirmation"
+              >
+                Czy na pewno chcesz odświeżyć?
+              </Dialog.Title>
+              <Dialog.Content>
+                <Text style={styles.dialogText}>
+                  Niezapisane dane zostaną utracone!
+                </Text>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button
+                  accessibilityComponentType="cancel"
+                  accessibilityTraits="cancel"
+                  onPress={() =>
+                    this.setState({ isRefreshConfirmationDialogOpened: false })
+                  }
+                >
+                  Anuluj
+                </Button>
+                <Button
+                  accessibilityComponentType="submit"
+                  accessibilityTraits="submit"
+                  onPress={async () => {
+                    await this.getData();
+                    this.setState({ isRefreshConfirmationDialogOpened: false });
+                  }}
+                >
+                  Odśwież i usuń
+                </Button>
+              </Dialog.Actions>
+            </Dialog>
+          </Portal>
           {this.state.isSelectingTime && (
             <DateTimePicker
               testID="picker"
