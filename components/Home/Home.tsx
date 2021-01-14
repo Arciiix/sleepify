@@ -151,11 +151,8 @@ class Home extends React.Component<any, HomeState> {
         isTheAlarmSwitchingNow: false,
       });
     } else {
-      let currentTime: string = response.data.time;
-      let alarmTime: string = response.data.alarm;
-
       let parsedCurrentTime: { hour: number; minute: number } = this.parseTime(
-        currentTime
+        response.data.time
       );
 
       let timeWord: number = parsedCurrentTime.hour;
@@ -166,7 +163,7 @@ class Home extends React.Component<any, HomeState> {
 
       //Calculate the time that is left to the alarm and update the chart
       let parsedAlarmTime: { hour: number; minute: number } = this.parseTime(
-        alarmTime
+        response.data.alarm
       );
       let parsedAlarmHour = parsedAlarmTime.hour;
 
@@ -205,8 +202,8 @@ class Home extends React.Component<any, HomeState> {
       )}:${this.addZero((difference / 60000) % 60)}`;
 
       this.setState({
-        time: currentTime,
-        alarmTime: alarmTime,
+        time: response.data.time,
+        alarmTime: response.data.alarm,
         timeWord: word,
         isAlarmActive: response.data.isAlarmActive,
         isQRCodeEnabled: response.data.isQRCodeEnabled,
