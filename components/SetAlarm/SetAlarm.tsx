@@ -256,8 +256,7 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
         floating: true,
         icon: "danger",
       });
-      //DEV
-      this.setState({});
+      this.setState({ isLoading: false });
     } else {
       showMessage({
         message: "Pomyślnie pobrano dane!",
