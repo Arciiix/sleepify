@@ -2,10 +2,11 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { showMessage } from "react-native-flash-message";
-import { withTheme, Switch } from "react-native-paper";
+import { withTheme, Switch, ActivityIndicator } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 import styles from "./Home.styles";
+import settings from "../Settings";
 
 //DEV
 import { LogBox } from "react-native";
@@ -110,187 +111,236 @@ class Home extends React.Component<any, HomeState> {
   }
 
   async getData(): Promise<any> {
-    //DEV
-    //TODO: Connect to the server
-    //If the connection has failed
-    let isConnected = false;
+    await new Promise((resolve, reject) =>
+      this.setState({ isLoading: true }, resolve)
+    );
+
+    let isConnected: boolean = true;
+
+    let request = await fetch(`${settings.ip}/getData`);
+    if (request.status !== 200) isConnected = false;
+    let response = await request.json();
+    if (!response) isConnected = false;
+    if (response.err) isConnected = false;
 
     if (!isConnected) {
+      //TODO IDEA: Save data into database, so when there isn't connection, the app will fetch data from it
       showMessage({
-        message: "Nie połączono się z serwerem!",
+        message: `Nie połączono się z serwerem! ${response.message}`,
         type: "danger",
         autoHide: false,
         floating: true,
         icon: "danger",
       });
+      this.setState({
+        time: `${this.addZero(new Date().getHours())}:${this.addZero(
+          new Date().getMinutes()
+        )}?`,
+        alarmTime: "-",
+        timeWord: "three",
+        isAlarmActive: false,
+        isQRCodeEnabled: false,
+        isSnoozeEnabled: false,
+        timeUntilAlarm: "?",
+        temperature: 0,
+        temperatureRange: { min: 20, max: 24 },
+        isConnected: false,
+        isLoading: false,
+        chartRotation: 0,
+        chartPercent: 0,
+        isTheAlarmSwitchingNow: false,
+      });
+    } else {
+      let currentTime: string = response.data.time;
+      let alarmTime: string = response.data.alarm;
+
+      let parsedCurrentTime: { hour: number; minute: number } = this.parseTime(
+        currentTime
+      );
+
+      let timeWord: number = parsedCurrentTime.hour;
+      if (timeWord >= 12) {
+        timeWord -= 12;
+      }
+      let word: string = numbersInWords[timeWord];
+
+      //Calculate the time that is left to the alarm and update the chart
+      let parsedAlarmTime: { hour: number; minute: number } = this.parseTime(
+        alarmTime
+      );
+      let parsedAlarmHour = parsedAlarmTime.hour;
+
+      if (parsedAlarmHour >= 12) {
+        parsedAlarmHour -= 12;
+      }
+
+      let currentTimeDate: Date = new Date();
+      currentTimeDate.setHours(parsedCurrentTime.hour);
+      currentTimeDate.setMinutes(parsedCurrentTime.minute);
+
+      let alarmTimeDate: Date = new Date();
+      alarmTimeDate.setHours(parsedAlarmTime.hour);
+      alarmTimeDate.setMinutes(parsedAlarmTime.minute);
+
+      //If the alarmTimeDate is earlier than currentTime, it means that the alarm is tommorow
+      if (currentTimeDate > alarmTimeDate) {
+        alarmTimeDate.setTime(alarmTimeDate.getTime() + 86400000); //So we add the whole day to this date
+      }
+
+      let rotation: number = Math.floor(
+        ((timeWord * 60 + parsedCurrentTime.minute) / 720) * 360
+      ); //time/max*360°
+
+      let percent: number = Math.floor(
+        ((alarmTimeDate.getTime() - currentTimeDate.getTime()) /
+          (1000 * 60 * 60 * 12)) *
+          100
+      ); // difference/max*100%
+
+      let difference: number =
+        alarmTimeDate.getTime() - currentTimeDate.getTime();
+
+      let differenceText = `${this.addZero(
+        Math.floor(difference / 60000 / 60)
+      )}:${this.addZero((difference / 60000) % 60)}`;
+
+      this.setState({
+        time: currentTime,
+        alarmTime: alarmTime,
+        timeWord: word,
+        isAlarmActive: response.data.isAlarmActive,
+        isQRCodeEnabled: response.data.isQRCodeEnabled,
+        isSnoozeEnabled: response.data.isSnoozeEnabled,
+        timeUntilAlarm: differenceText,
+        temperature: response.data.temperature,
+        temperatureRange: response.data.temperatureRange,
+        isConnected: true,
+        isLoading: false,
+        chartRotation: rotation,
+        chartPercent: percent,
+        isTheAlarmSwitchingNow: false,
+      });
     }
-
-    //DEV
-    //TODO: Fetch them from the server
-    let currentTime: string = "12:00";
-    let alarmTime: string = "13:00";
-
-    let parsedCurrentTime: { hour: number; minute: number } = this.parseTime(
-      currentTime
-    );
-
-    let timeWord: number = parsedCurrentTime.hour;
-    if (timeWord >= 12) {
-      timeWord -= 12;
-    }
-    let word: string = numbersInWords[timeWord];
-
-    //Calculate the time that is left to the alarm and update the chart
-    let parsedAlarmTime: { hour: number; minute: number } = this.parseTime(
-      alarmTime
-    );
-    if (parsedAlarmTime.hour >= 12) {
-      parsedAlarmTime.hour -= 12;
-    }
-
-    let timeInMinutes: number = timeWord * 60 + parsedCurrentTime.minute;
-    let alarmInMinutes: number =
-      parsedAlarmTime.hour * 60 + parsedAlarmTime.minute;
-
-    let rotation: number = Math.floor((timeInMinutes / 720) * 360); //time/max*360°
-
-    let percent: number = Math.floor(
-      (Math.abs(alarmInMinutes - timeInMinutes) / 720) * 100
-    ); // difference/max*100%
-
-    let difference =
-      this.parseTime(alarmTime).hour * 60 +
-      parsedAlarmTime.minute -
-      parsedCurrentTime.hour * 60 -
-      parsedCurrentTime.minute;
-
-    if (difference < 0) {
-      difference = 1440 + difference; //If the difference is a negative number, it means that the alarm time is after 0:00, so we have to subtract this from the whole 24 hours (1 day)
-    }
-
-    difference -= 1; //We want to make the value little lower, because we want whole minutes (for e.g if there's 12:00:01 and the alarm is 13:00, it would say it's 1:00 left, but we want 0:59)
-    let differenceText = `${this.addZero(
-      Math.floor(difference / 60)
-    )}:${this.addZero(difference % 60)}`;
-
-    //TODO: Fix the differenceText - when the difference is 0, it's "0-1:0-1" because we subtract 1 from it!
-
-    //DEV
-    this.setState({
-      time: currentTime,
-      alarmTime: alarmTime,
-      timeWord: word,
-      isAlarmActive: false,
-      isQRCodeEnabled: true,
-      isSnoozeEnabled: true,
-      timeUntilAlarm: differenceText,
-      temperature: 22.45,
-      temperatureRange: { min: 20, max: 24 },
-      isConnected: isConnected,
-      isLoading: false,
-      chartRotation: rotation,
-      chartPercent: percent,
-      isTheAlarmSwitchingNow: false,
-    });
   }
 
   render() {
-    return (
-      <View style={styles.container}>
-        <View style={styles.time}>
-          <MaterialCommunityIcons
-            name={`clock-time-${this.state.timeWord}-outline`}
-            color={"white"}
-            size={80}
+    if (this.state.isLoading) {
+      //TODO: Make the loading page
+      return (
+        <View style={styles.loadingView}>
+          <ActivityIndicator
+            animating={true}
+            size={100}
+            color={"#ffffff"}
+            accessibilityComponentType={"ActivityIndicator"}
+            accessibilityTraits={"Loading"}
           />
-          <Text style={styles.timeText}>{this.state.time}</Text>
+          <Text style={styles.loadingText}>Ładowanie...</Text>
+          <Text style={{ color: "white", fontSize: 30, textAlign: "center" }}>
+            {" "}
+            {/* DEV TODO */}
+            DEV - This screen isn't finished yet
+          </Text>
         </View>
+      );
+    } else {
+      return (
+        <View style={styles.container}>
+          <View style={styles.time}>
+            <MaterialCommunityIcons
+              name={`clock-time-${this.state.timeWord}-outline`}
+              color={"white"}
+              size={80}
+            />
+            <Text style={styles.timeText}>{this.state.time}</Text>
+          </View>
 
-        <AnimatedCircularProgress
-          size={310}
-          width={10}
-          fill={this.state.chartPercent}
-          rotation={this.state.chartRotation}
-          tintColor={this.state.isAlarmActive ? "#0781fa" : "#004080"}
-          backgroundColor={this.state.isAlarmActive ? "#ffffff" : "#919191"}
-        >
-          {() => {
-            return (
-              <>
-                <Text style={styles.alarmHour}>{this.state.alarmTime}</Text>
-                {this.state.isAlarmActive ? (
-                  <View style={styles.alarmIcons}>
-                    <MaterialCommunityIcons
-                      name={"alarm"}
-                      color={"white"}
-                      size={50}
-                      style={styles.alarmIcon}
-                    />
-                    {this.state.isQRCodeEnabled && (
+          <AnimatedCircularProgress
+            size={310}
+            width={10}
+            fill={this.state.chartPercent}
+            rotation={this.state.chartRotation}
+            tintColor={this.state.isAlarmActive ? "#0781fa" : "#004080"}
+            backgroundColor={this.state.isAlarmActive ? "#ffffff" : "#919191"}
+          >
+            {() => {
+              return (
+                <>
+                  <Text style={styles.alarmHour}>{this.state.alarmTime}</Text>
+                  {this.state.isAlarmActive ? (
+                    <View style={styles.alarmIcons}>
                       <MaterialCommunityIcons
-                        name={"qrcode-scan"}
+                        name={"alarm"}
                         color={"white"}
                         size={50}
                         style={styles.alarmIcon}
                       />
-                    )}
+                      {this.state.isQRCodeEnabled && (
+                        <MaterialCommunityIcons
+                          name={"qrcode-scan"}
+                          color={"white"}
+                          size={50}
+                          style={styles.alarmIcon}
+                        />
+                      )}
 
-                    {this.state.isSnoozeEnabled && (
+                      {this.state.isSnoozeEnabled && (
+                        <MaterialCommunityIcons
+                          name={"alarm-snooze"}
+                          color={"white"}
+                          size={50}
+                          style={styles.alarmIcon}
+                        />
+                      )}
+                    </View>
+                  ) : (
+                    <View style={styles.alarmIcons}>
                       <MaterialCommunityIcons
-                        name={"alarm-snooze"}
+                        name={"alarm-off"}
                         color={"white"}
                         size={50}
                         style={styles.alarmIcon}
                       />
-                    )}
-                  </View>
-                ) : (
-                  <View style={styles.alarmIcons}>
-                    <MaterialCommunityIcons
-                      name={"alarm-off"}
-                      color={"white"}
-                      size={50}
-                      style={styles.alarmIcon}
-                    />
-                  </View>
-                )}
+                    </View>
+                  )}
 
-                <Text style={styles.alarmTimeLeft}>
-                  za {this.state.timeUntilAlarm}
-                </Text>
-              </>
-            );
-          }}
-        </AnimatedCircularProgress>
-        <Switch
-          trackColor={{
-            true: this.state.isAlarmActive ? "#7ac5cf" : "#b0003e",
-            false: this.state.isAlarmActive ? "#7ac5cf" : "#b0003e",
-          }} //We want it to be synchronized - turning alarm takes some time
-          thumbColor={this.state.isAlarmActive ? "#0099ff" : "#ffffff"}
-          onValueChange={this.switchTheAlarm.bind(this)}
-          disabled={this.state.isTheAlarmSwitchingNow}
-          value={this.state.isAlarmActive}
-          style={styles.switch}
-          accessibilityTraits={"switch"}
-          accessibilityComponentType={"switch"}
-          accessibilityRole={"switch"}
-          accessibilityState={{
-            selected: this.state.isAlarmActive,
-            busy: this.state.isTheAlarmSwitchingNow,
-          }}
-          accessibilityLabel={"Switch the alarm state"}
-        />
-        <Text
-          style={[
-            styles.temperature,
-            { color: this.getTemperatureRangeColor() },
-          ]}
-        >
-          {this.state.temperature}°C
-        </Text>
-      </View>
-    );
+                  <Text style={styles.alarmTimeLeft}>
+                    za {this.state.timeUntilAlarm}
+                  </Text>
+                </>
+              );
+            }}
+          </AnimatedCircularProgress>
+          <Switch
+            trackColor={{
+              true: this.state.isAlarmActive ? "#7ac5cf" : "#b0003e",
+              false: this.state.isAlarmActive ? "#7ac5cf" : "#b0003e",
+            }} //We want it to be synchronized - turning alarm takes some time
+            thumbColor={this.state.isAlarmActive ? "#0099ff" : "#ffffff"}
+            onValueChange={this.switchTheAlarm.bind(this)}
+            disabled={this.state.isTheAlarmSwitchingNow}
+            value={this.state.isAlarmActive}
+            style={styles.switch}
+            accessibilityTraits={"switch"}
+            accessibilityComponentType={"switch"}
+            accessibilityRole={"switch"}
+            accessibilityState={{
+              selected: this.state.isAlarmActive,
+              busy: this.state.isTheAlarmSwitchingNow,
+            }}
+            accessibilityLabel={"Switch the alarm state"}
+          />
+          <Text
+            style={[
+              styles.temperature,
+              { color: this.getTemperatureRangeColor() },
+            ]}
+          >
+            {this.state.temperature}°C
+          </Text>
+        </View>
+      );
+    }
   }
 }
 

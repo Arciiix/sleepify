@@ -1,13 +1,21 @@
 import { StyleSheet } from "react-native";
 
-const textColor = "white";
-
 export default StyleSheet.create({
+  loadingView: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    color: "#ffffff",
+    fontSize: 60,
+    textAlign: "center",
+  },
   container: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    color: textColor,
+    color: "#ffffff",
   },
   time: {
     display: "flex",
@@ -17,7 +25,7 @@ export default StyleSheet.create({
     marginTop: 15,
   },
   timeText: {
-    color: textColor,
+    color: "#ffffff",
     fontSize: 80,
   },
   alarmView: {
