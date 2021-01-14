@@ -86,6 +86,8 @@ class Alarm {
     let fixedHour: string = this.addZero(hour);
     let fixedMinute: string = this.addZero(minute);
 
+    /*
+   DEV
     let request = await fetch(
       `http://${this.alarmIP}?hour=${fixedHour}&minute=${fixedMinute}`
     );
@@ -96,6 +98,9 @@ class Alarm {
     } else {
       return { err: true, message: `WRONG_STATUS_${request.status}` };
     }
+
+    */
+    return { err: false };
   }
 
   addZero(number: number): string {
@@ -115,20 +120,23 @@ function log(message: string, isError?: boolean): void {
   }
 }
 
-const Alarmdataect = new Alarm();
+const AlarmdataObject = new Alarm();
 
 app.get("/getData", async (req, res) => {
-  let data = await Alarmdataect.getData();
+  let data = await AlarmdataObject.getData();
   res.send(data);
 });
 
 app.post("/setAlarm", async (req, res) => {
+  console.log(req.body);
+
   const validData = [
     "hour",
     "minute",
     "isAlarmActive",
     "isQRCodeEnabled",
     "isSnoozeEnabled",
+    "message",
   ];
 
   let missing: Array<string> = []; //The missing data will be added to this array and then converted to an error string (e.g. when hour is missing, it will be MISSING_HOUR when hour and minute - MISSING_HOUR_MINUTE)
@@ -155,7 +163,7 @@ app.post("/setAlarm", async (req, res) => {
   let isSuccess: {
     err: boolean;
     message?: string;
-  } = await Alarmdataect.setAlarm(
+  } = await AlarmdataObject.setAlarm(
     parseInt(req.body.hour),
     parseInt(req.body.minute)
   );

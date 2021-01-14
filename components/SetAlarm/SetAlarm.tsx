@@ -22,6 +22,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import equal from "fast-deep-equal";
 
 import styles from "./SetAlarm.styles";
+import settings from "../Settings";
 
 interface SetAlarmState {
   currentTime: { hour: number; minute: number };
@@ -44,6 +45,42 @@ interface SetAlarmState {
   snoozeLengthText: string; //Used in Prompt dialog (selecting snooze length)
   isRefreshConfirmationDialogOpened: boolean;
   isLoading: boolean;
+}
+
+//Isn't my code, but I wrote one on my own and wasn't satisfied :P (credit: https://stackoverflow.com/questions/11646685/replacing-objects-properties-with-properties-from-another-object-in-javascript)
+function deepCopy(src: any, dest?: any) {
+  let name,
+    value,
+    isArray,
+    toString = Object.prototype.toString;
+
+  // If no `dest`, create one
+  if (!dest) {
+    isArray = toString.call(src) === "[object Array]";
+    if (isArray) {
+      dest = [];
+      dest.length = src.length;
+    } else {
+      // You could have lots of checks here for other types of objects
+      dest = {};
+    }
+  }
+
+  // Loop through the props
+  for (name in src) {
+    // If you don't want to copy inherited properties, add a `hasOwnProperty` check here
+    // In our case, we only do that for arrays, but it depends on your needs
+    if (!isArray || src.hasOwnProperty(name)) {
+      value = src[name];
+      if (typeof value === "object") {
+        // Recurse
+        value = deepCopy(value);
+      }
+      dest[name] = value;
+    }
+  }
+
+  return dest;
 }
 
 class SetAlarm extends React.Component<any, SetAlarmState> {
@@ -202,14 +239,72 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
   }
 
   async getData(): Promise<void> {
-    //DEV
-    //TODO: Get data from the server
+    let isConnected: boolean = true;
+
+    let request = await fetch(`${settings.ip}/getData`);
+    if (request.status !== 200) isConnected = false;
+    let response = await request.json();
+    if (!response) isConnected = false;
+    if (response.err) isConnected = false;
+
+    if (!isConnected) {
+      //TODO IDEA: Save data into database, so when there isn't connection, the app will fetch data from it
+      showMessage({
+        message: `Błąd przy pobieraniu danych! ${response.message}`,
+        type: "danger",
+        autoHide: false,
+        floating: true,
+        icon: "danger",
+      });
+      //DEV
+      this.setState({});
+    } else {
+      showMessage({
+        message: "Pomyślnie pobrano dane!",
+        floating: true,
+        type: "success",
+        icon: "success",
+      });
+
+      let newState = deepCopy(response.data, this.state);
+      this.setState(newState);
+    }
   }
 
   async saveData(): Promise<void> {
-    //DEV
-    //TODO: Save data (send it to the server)
-    console.log("DEV: SENDDATA");
+    let request = await fetch(`${settings.ip}/setAlarm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...this.state, ...this.state.alarmTime }), //this.state.alarmTime consists of hour and minute variables that are used on the server
+    });
+    if (request.status !== 200) {
+      return showMessage({
+        message: `Problem przy zapytaniu do /setAlarm!`,
+        type: "danger",
+        icon: "danger",
+        floating: true,
+      });
+    } else {
+      let response = await request.json();
+      if (response.err) {
+        return showMessage({
+          message: `Problem przy ustawianiu alarmu ${
+            response.message ? "Błąd: " + response.message : ""
+          }`,
+          type: "danger",
+          icon: "danger",
+          floating: true,
+        });
+      } else {
+        showMessage({
+          message: "Alarm został ustawiony!",
+          type: "success",
+          icon: "success",
+          floating: true,
+        });
+        this.initialState = this.state; //The alarm is now set, so the unsaved changes don't exist
+      }
+    }
   }
 
   openPicker(): void {
