@@ -6,6 +6,7 @@ import Slider from "@react-native-community/slider";
 import styles from "./QRCodeSetup.styles";
 import settings from "../Settings";
 import { Button, Dialog, Portal, TextInput } from "react-native-paper";
+import { showMessage } from "react-native-flash-message";
 
 interface QRCodeSetupState {
   qrCodeId: string;
@@ -14,6 +15,7 @@ interface QRCodeSetupState {
   qrCodeTempId: string;
   qrCodeTempHashLength: number;
   qrCodeTempIdError: boolean;
+  imgUniqueKey: number;
 }
 
 class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
@@ -26,23 +28,77 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
       qrCodeTempId: "",
       qrCodeTempHashLength: 5,
       qrCodeTempIdError: false,
+      imgUniqueKey: Date.now(),
     };
   }
 
   async componentDidMount(): Promise<void> {
-    //DEV
-    //Fetch data
-
-    this.setState({ qrCodeId: "abc12345" });
+    await this.getData();
   }
 
-  createQRCode() {
+  async getData(): Promise<void> {
+    let request = await fetch(`${settings.ip}/getLocalData`);
+    if (request.status !== 200) {
+      showMessage({
+        message: `Błąd przy pobieraniu danych! Status code: ${request.status}`,
+        type: "danger",
+        icon: "danger",
+        floating: true,
+        autoHide: false,
+      });
+    }
+
+    let response = await request.json();
+
+    this.setState({
+      qrCodeId: response.qrCodeId,
+      qrCodeHash: response.qrCodeHash,
+      imgUniqueKey: Date.now(),
+    });
+  }
+
+  async createQRCode(): Promise<void> {
     if (!this.state.qrCodeTempId) {
       return this.setState({ qrCodeTempIdError: true });
     }
-    //DEV
-    //Create code by sending data to server
-    console.log(this.state.qrCodeTempId, this.state.qrCodeTempHashLength);
+
+    let request = await fetch(`${settings.ip}/createQRCode`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: this.state.qrCodeTempId,
+        hashLength: this.state.qrCodeTempHashLength,
+      }),
+    });
+
+    if (request.status !== 200) {
+      showMessage({
+        message: `Nie utworzono nowego kodu QR! Status code: ${request.status}`,
+        type: "danger",
+        icon: "danger",
+        floating: true,
+        autoHide: false,
+      });
+    } else {
+      let response = await request.json();
+      if (response.err) {
+        showMessage({
+          message: `Nie utworzono nowego kodu QR! Błąd: ${response.message}`,
+          type: "danger",
+          icon: "danger",
+          floating: true,
+          autoHide: false,
+        });
+      } else {
+        await this.getData();
+        showMessage({
+          message: `Utworzono nowy kod!`,
+          type: "success",
+          icon: "success",
+          floating: true,
+        });
+      }
+    }
 
     this.setState({ isCreatingNewQRCodeDialogActive: false });
   }
@@ -54,12 +110,17 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
           source={{
             uri: `${settings.ip}/getQRCode?size=${
               settings.imagesQuality * 100
-            }`,
+            }&key=${this.state.imgUniqueKey}`,
           }}
         />
         <Text style={styles.idText}>{this.state.qrCodeId}</Text>
         <Portal>
-          <Dialog visible={this.state.isCreatingNewQRCodeDialogActive}>
+          <Dialog
+            visible={this.state.isCreatingNewQRCodeDialogActive}
+            onDismiss={() =>
+              this.setState({ isCreatingNewQRCodeDialogActive: false })
+            }
+          >
             <Dialog.Title
               accessibilityComponentType="confirmation"
               accessibilityTraits="confirmation"
@@ -84,7 +145,7 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
                 </Text>
                 <Slider
                   minimumValue={1}
-                  maximumValue={20}
+                  maximumValue={10}
                   step={1}
                   value={5}
                   onValueChange={(val) =>
@@ -142,6 +203,7 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
                 size={25}
               />
             )}
+            disabled //DEV - Coming soon
           >
             Zobacz
           </Button>
@@ -154,6 +216,7 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
             icon={() => (
               <MaterialCommunityIcons name="check" color={"white"} size={25} />
             )}
+            disabled //DEV - Coming soon
           >
             Testuj
           </Button>

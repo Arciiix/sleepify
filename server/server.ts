@@ -2,6 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import bodyParser from "body-parser";
 import QRCode from "qrcode";
+import crypto from "crypto";
 
 const PORT: number | string = process.env.PORT || 6456;
 
@@ -17,8 +18,10 @@ class AlarmData {
   isAlarmActive: boolean = false;
   isAlarmBuzzing: boolean = false;
   isQRCodeEnabled: boolean = false;
-  qrCodeId: string = "";
-  qrCodeHash: string = "";
+  //DEV
+  //TODO: Get the qrCodeId and qrCodeHash from a database
+  qrCodeId: string = "INIT";
+  qrCodeHash: string = "inithash";
   isSnoozeEnabled: boolean = false;
   snoozeLength: number = 5;
   temperature: number = 0;
@@ -192,14 +195,15 @@ app.post("/setAlarm", async (req, res) => {
   res.send(isSuccess);
 });
 
+app.get("/getLocalData", (req, res) => {
+  //Sends local data (doesn't fetch data from alarm - sends the current local storaged (e.g. used in retrieving alarmSettings which aren't stored on the actual alarm, so there's no need to fetch))
+  res.send(AlarmdataObject.data);
+});
+
 app.get("/getQRCode", (req, res) => {
   if (!req.query.size) return res.send({ err: true, message: "MISSING_SIZE" });
   if (!parseInt(req.query.size as string))
     return res.send({ err: true, message: "WRONG_SIZE" });
-
-  //DEV
-  AlarmdataObject.data.qrCodeId = "abc123";
-  AlarmdataObject.data.qrCodeHash = "jifds98j3fj982jf9832jf";
 
   if (!AlarmdataObject.data.qrCodeId) {
     return res.send({ err: true, message: "NO_QRCODE" });
@@ -213,6 +217,24 @@ app.get("/getQRCode", (req, res) => {
       width: parseInt(req.query.size as string),
     });
   }
+});
+
+app.post("/createQRCode", (req, res) => {
+  if (!req.body.id) return res.send({ err: true, message: "MISSING_ID" });
+  if (!req.body.hashLength)
+    return res.send({ err: true, message: "MISSING_HASH_LENGTH" });
+  if (!parseInt(req.body.hashLength))
+    return res.send({ err: true, message: "INVALID_HASH_LENGTH" });
+
+  //DEV
+  //TODO: Check if the ID is already taken, and if so, send {err: true, message: "ID_IN_USE"}
+
+  AlarmdataObject.data.qrCodeId = req.body.id;
+  AlarmdataObject.data.qrCodeHash = crypto
+    .randomBytes(parseInt(req.body.hashLength))
+    .toString("hex");
+
+  res.send({ err: false });
 });
 
 function addZero(number: number): string {

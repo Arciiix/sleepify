@@ -356,7 +356,12 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
       >
         <View style={styles.container}>
           <Portal>
-            <Dialog visible={this.state.isRefreshConfirmationDialogOpened}>
+            <Dialog
+              visible={this.state.isRefreshConfirmationDialogOpened}
+              onDismiss={() =>
+                this.setState({ isRefreshConfirmationDialogOpened: false })
+              }
+            >
               <Dialog.Title
                 accessibilityComponentType="confirmation"
                 accessibilityTraits="confirmation"
@@ -505,7 +510,15 @@ class SetAlarm extends React.Component<any, SetAlarmState> {
             </Pressable>
 
             <Portal>
-              <Dialog visible={this.state.isSelectingSnoozeLength}>
+              <Dialog
+                visible={this.state.isSelectingSnoozeLength}
+                onDismiss={() =>
+                  this.setState({
+                    isSelectingSnoozeLength: false,
+                    snoozeLengthText: "",
+                  })
+                }
+              >
                 <Dialog.Title
                   accessibilityTraits={"title"}
                   accessibilityComponentType={"title"}
