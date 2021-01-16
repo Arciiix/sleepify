@@ -34,4 +34,10 @@ export default StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
   },
+  sliderLabel: {
+    marginTop: 20,
+    color: "#ffffff",
+    fontSize: 20,
+    textAlign: "center",
+  },
 });
