@@ -1,6 +1,7 @@
 import express from "express";
 import fetch from "node-fetch";
 import bodyParser from "body-parser";
+import QRCode from "qrcode";
 
 const PORT: number | string = process.env.PORT || 6456;
 
@@ -17,6 +18,7 @@ class AlarmData {
   isAlarmBuzzing: boolean = false;
   isQRCodeEnabled: boolean = false;
   qrCodeId: string = "";
+  qrCodeHash: string = "";
   isSnoozeEnabled: boolean = false;
   snoozeLength: number = 5;
   temperature: number = 0;
@@ -188,6 +190,29 @@ app.post("/setAlarm", async (req, res) => {
   );
 
   res.send(isSuccess);
+});
+
+app.get("/getQRCode", (req, res) => {
+  if (!req.query.size) return res.send({ err: true, message: "MISSING_SIZE" });
+  if (!parseInt(req.query.size as string))
+    return res.send({ err: true, message: "WRONG_SIZE" });
+
+  //DEV
+  AlarmdataObject.data.qrCodeId = "abc123";
+  AlarmdataObject.data.qrCodeHash = "jifds98j3fj982jf9832jf";
+
+  if (!AlarmdataObject.data.qrCodeId) {
+    return res.send({ err: true, message: "NO_QRCODE" });
+  } else {
+    let obj: { i: string; h: string } = {
+      i: AlarmdataObject.data.qrCodeId,
+      h: AlarmdataObject.data.qrCodeHash,
+    }; //I - qrCodeId; h - qrCodeHash
+
+    QRCode.toFileStream(res, JSON.stringify(obj), {
+      width: parseInt(req.query.size as string),
+    });
+  }
 });
 
 function addZero(number: number): string {

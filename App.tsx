@@ -12,6 +12,7 @@ import FlashMessage from "react-native-flash-message";
 
 import Home from "./components/Home/Home";
 import SetAlarm from "./components/SetAlarm/SetAlarm";
+import QRCodeSetup from "./components/QRCodeSetup/QRCodeSetup";
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -49,6 +50,20 @@ export default class App extends React.Component<any, any> {
                 ),
               }}
             />
+            <Tab.Screen
+              name="QRCodeSetup"
+              component={QRCodeSetup}
+              options={{
+                tabBarLabel: "Kod QR",
+                tabBarIcon: () => (
+                  <MaterialIcons
+                    name="qr-code-scanner"
+                    color={"white"}
+                    size={26}
+                  />
+                ),
+              }}
+            ></Tab.Screen>
           </Tab.Navigator>
         </NavigationContainer>
       </PaperProvider>

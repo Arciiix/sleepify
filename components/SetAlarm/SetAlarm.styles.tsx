@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableWithoutFeedbackBase } from "react-native";
+import { StyleSheet } from "react-native";
 
 const optionTextSize = 40;
 
