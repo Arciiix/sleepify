@@ -151,12 +151,15 @@ class Home extends React.Component<any, HomeState> {
         isTheAlarmSwitchingNow: false,
       });
     } else {
-      showMessage({
-        message: "Pomyślnie pobrano dane!",
-        floating: true,
-        type: "success",
-        icon: "success",
-      });
+      //If the time isn't identical, don't show the success message (because it would cover the warning)
+      if (response.data.isTheTimeIdenticalToTheServerOne) {
+        showMessage({
+          message: "Pomyślnie pobrano dane!",
+          floating: true,
+          type: "success",
+          icon: "success",
+        });
+      }
 
       let parsedCurrentTime: { hour: number; minute: number } = this.parseTime(
         response.data.time
@@ -207,6 +210,16 @@ class Home extends React.Component<any, HomeState> {
       let differenceText = `${this.addZero(
         Math.floor(difference / 60000 / 60)
       )}:${this.addZero(Math.floor(difference / 60000) % 60)}`;
+
+      if (!response.data.isTheTimeIdenticalToTheServerOne) {
+        showMessage({
+          message: `Czas na budziku nie zgadza się z serwerem! (${response.data.time})`,
+          duration: 5000,
+          type: "warning",
+          icon: "warning",
+          floating: true,
+        });
+      }
 
       this.setState({
         time: response.data.time,

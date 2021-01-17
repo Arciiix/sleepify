@@ -15,6 +15,7 @@ class AlarmData {
   alarm: string = "0:00";
   currentTime: { hour: number; minute: number } = { hour: 0, minute: 0 };
   alarmTime: { hour: number; minute: number } = { hour: 0, minute: 0 };
+  isTheTimeIdenticalAsTheServerOne: boolean;
   isAlarmActive: boolean = false;
   isAlarmBuzzing: boolean = false;
   isQRCodeEnabled: boolean = false;
@@ -54,7 +55,7 @@ class Alarm {
     */
 
     //DEV
-    let parsedResponse: Array<string> = "09:15 false 21.44 22:55 false 1.4".split(
+    let parsedResponse: Array<string> = "09:15 false 21.44 20:00 false 1.4".split(
       " "
     );
 
@@ -71,6 +72,10 @@ class Alarm {
       hour: parseInt(this.data.time.split(":")[0]),
       minute: parseInt(this.data.time.split(":")[1]),
     };
+
+    this.data.isTheTimeIdenticalAsTheServerOne =
+      this.data.time ===
+      `${addZero(new Date().getHours())}:${addZero(new Date().getMinutes())}`;
 
     return { err: false, data: this.data };
   }
