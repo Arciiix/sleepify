@@ -16,6 +16,7 @@ interface QRCodeScannerState {
   isBackCamera: boolean;
   isTorch: boolean;
   cameraStarted: boolean;
+  cameraKey: string;
 }
 interface QRCodeScannerProps {
   onScanned(data: any): any;
@@ -32,6 +33,7 @@ class QRCodeScanner extends React.Component<
       isBackCamera: true,
       isTorch: false,
       cameraStarted: false,
+      cameraKey: "",
     };
   }
   async componentDidMount(): Promise<void> {
@@ -41,6 +43,9 @@ class QRCodeScanner extends React.Component<
     );
     await this.requestPermissions();
     this.forceUpdate();
+    setTimeout(() => {
+      this.setState({ cameraKey: Date.now().toString() });
+    }, 1000);
   }
 
   componentDidUpdate() {
@@ -78,6 +83,7 @@ class QRCodeScanner extends React.Component<
       return (
         <View style={styles.container}>
           <Camera
+            key={this.state.cameraKey}
             style={styles.camera}
             type={
               this.state.isBackCamera
