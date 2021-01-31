@@ -5,8 +5,12 @@ import Slider from "@react-native-community/slider";
 
 import styles from "./QRCodeSetup.styles";
 import settings from "../Settings";
+import QRCodeScanner from "../QRCodeScanner/QRCodeScanner";
 import { Button, Dialog, Portal, TextInput } from "react-native-paper";
 import { showMessage } from "react-native-flash-message";
+import { createStackNavigator } from "@react-navigation/stack";
+
+const Stack = createStackNavigator();
 
 interface QRCodeSetupState {
   qrCodeId: string;
@@ -216,7 +220,7 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
             icon={() => (
               <MaterialCommunityIcons name="check" color={"white"} size={25} />
             )}
-            disabled //DEV - Coming soon
+            onPress={() => this.props.navigation.navigate("QRCodeTest")}
           >
             Testuj
           </Button>
@@ -229,4 +233,68 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
   }
 }
 
-export default QRCodeSetup;
+class QRCodeTest extends React.Component<any, any> {
+  onScanned(data: any) {
+    console.log(data.data);
+  }
+  render() {
+    const isFocused = this.props.navigation.isFocused();
+    console.log(isFocused);
+    if (!isFocused) {
+      return null;
+    } else if (isFocused) {
+      return (
+        <View style={{ flex: 1 }}>
+          <QRCodeScanner
+            onScanned={this.onScanned.bind(this)}
+            mount={this.props.navigation.isFocused()}
+          />
+        </View>
+      );
+    }
+  }
+}
+
+//DEV
+//TODO: Fix the camera - it doesn't work, when we change the BOTTOM navigation tabs - add a event listener - when the BOTTOMTAB will change, unmount the camera component
+class QRCodeSetupNavigation extends React.Component<any, any> {
+  constructor(props: any) {
+    super(props);
+    this.state = { mount: true };
+  }
+
+  componentDidMount() {
+    this.props.navigation.addListener("blur", () => {
+      this.setState({ mount: false });
+    });
+    this.props.navigation.addListener("focus", () => {
+      this.setState({ mount: true });
+    });
+  }
+  render() {
+    if (this.state.mount) {
+      return (
+        <Stack.Navigator initialRouteName={"QRCodeSetup"}>
+          <Stack.Screen
+            name="QRCodeSetup"
+            component={QRCodeSetup}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="QRCodeTest"
+            component={QRCodeTest}
+            options={{
+              title: "Testuj kod QR",
+            }}
+          />
+        </Stack.Navigator>
+      );
+    } else {
+      return null;
+    }
+  }
+}
+
+export default QRCodeSetupNavigation;
