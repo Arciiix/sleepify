@@ -37,7 +37,6 @@ class QRCodeScanner extends React.Component<
     };
   }
   async componentDidMount(): Promise<void> {
-    console.log("MOUNT");
     await new Promise((resolve) =>
       this.setState({ cameraStarted: false }, resolve)
     );
@@ -46,14 +45,6 @@ class QRCodeScanner extends React.Component<
     setTimeout(() => {
       this.setState({ cameraKey: Date.now().toString() });
     }, 1000);
-  }
-
-  componentDidUpdate() {
-    console.log("UPDATE");
-  }
-
-  componentWillUnmount() {
-    console.log("UNMOUNT");
   }
 
   async requestPermissions(): Promise<void> {
@@ -77,7 +68,6 @@ class QRCodeScanner extends React.Component<
   }
 
   render() {
-    console.log(this.state);
     if (this.props.mount) {
       if (!this.state.cameraStarted) return null;
       return (
@@ -110,7 +100,7 @@ class QRCodeScanner extends React.Component<
                     name={
                       this.state.isTorch ? `flash-outline` : "flash-off-outline"
                     }
-                    size={100}
+                    size={75}
                     color={"white"}
                   />
                 </Pressable>
@@ -121,7 +111,7 @@ class QRCodeScanner extends React.Component<
                 >
                   <Ionicons
                     name="camera-reverse-outline"
-                    size={100}
+                    size={75}
                     color={"white"}
                   />
                 </Pressable>

@@ -40,4 +40,24 @@ export default StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
   },
+  scannedDialogContent: {
+    display: "flex",
+    color: "white",
+    flexDirection: "column",
+  },
+  scannedDialogHeader: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  scannedDialogText: {
+    color: "white",
+    fontSize: 15,
+  },
+  dialogLoadingText: {
+    color: "white",
+    fontSize: 26,
+    lineHeight: 26,
+    marginTop: 20,
+  },
 });

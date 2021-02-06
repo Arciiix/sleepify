@@ -159,7 +159,7 @@ app.post("/setAlarm", async (req, res) => {
   }
 
   //DEV
-  //TODO: Variables such as QRCodeId, snoozeLength or message should be checked here - they are no compulsory
+  //TODO: Variables such as QRCodeId, snoozeLength or message should be checked here - they are not compulsory
   //DEV
   //TODO: Handle other properties (such as isQRCodeEnabled)
 
@@ -198,6 +198,7 @@ app.post("/setAlarm", async (req, res) => {
   );
 
   res.send(isSuccess);
+  //DEV TODO: Add logs
 });
 
 app.get("/getLocalData", (req, res) => {
@@ -238,8 +239,28 @@ app.post("/createQRCode", (req, res) => {
   AlarmdataObject.data.qrCodeHash = crypto
     .randomBytes(parseInt(req.body.hashLength))
     .toString("hex");
-
+  log(
+    `Created new QR code with id ${AlarmdataObject.data.qrCodeId} and hash ${AlarmdataObject.data.qrCodeHash}`
+  );
   res.send({ err: false });
+});
+
+app.get("/checkQRCode", (req, res) => {
+  if (!req.query.id) return res.send({ err: true, message: "MISSING_ID" });
+  if (!req.query.hash) return res.send({ err: true, message: "MISSING_HASH" });
+  let { qrCodeHash, qrCodeId } = AlarmdataObject.data;
+
+  if (req.query.id !== qrCodeId || req.query.hash !== qrCodeHash) {
+    log(
+      `Got QR code with id ${req.query.id} and hash ${req.query.hash} to check. It's NOT the same as the current one`
+    );
+    return res.send({ err: false, areSame: false });
+  } else {
+    log(
+      `Got QR code with id ${req.query.id} and hash ${req.query.hash} to check. It's the same as the current one`
+    );
+    return res.send({ err: false, areSame: true });
+  }
 });
 
 function addZero(number: number): string {

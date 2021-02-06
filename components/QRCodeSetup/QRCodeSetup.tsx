@@ -6,7 +6,13 @@ import Slider from "@react-native-community/slider";
 import styles from "./QRCodeSetup.styles";
 import settings from "../Settings";
 import QRCodeScanner from "../QRCodeScanner/QRCodeScanner";
-import { Button, Dialog, Portal, TextInput } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Button,
+  Dialog,
+  Portal,
+  TextInput,
+} from "react-native-paper";
 import { showMessage } from "react-native-flash-message";
 import { createStackNavigator } from "@react-navigation/stack";
 
@@ -233,9 +239,81 @@ class QRCodeSetup extends React.Component<any, QRCodeSetupState> {
   }
 }
 
-class QRCodeTest extends React.Component<any, any> {
+interface QRCodeTestState {
+  scanned: boolean;
+  data: any;
+  isError: boolean;
+  isFetchingCodeData: boolean;
+  isTheScannedCodeTheCurrent: boolean;
+}
+class QRCodeTest extends React.Component<any, QRCodeTestState> {
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      scanned: false,
+      data: null,
+      isError: false,
+      isFetchingCodeData: true,
+      isTheScannedCodeTheCurrent: false,
+    };
+  }
   onScanned(data: any) {
-    console.log(data.data);
+    let newData: any;
+    try {
+      newData = JSON.parse(data.data);
+    } catch (err) {
+      if (err) {
+        return this.setState({ scanned: true, isError: true });
+      }
+    }
+    if (!newData.i || !newData.h) {
+      this.setState({ scanned: true, isError: true });
+    } else {
+      this.setState({
+        data: newData,
+        scanned: true,
+        isError: false,
+        isFetchingCodeData: true,
+      });
+      //Check if the scanned QR code is the same as the server one (currently set for scanning)
+      fetch(
+        `${settings.ip}/checkQRCode?${new URLSearchParams({
+          id: newData.i,
+          hash: newData.h,
+        })}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.err) {
+            showMessage({
+              message: `Błąd przy próbie porównania kodów: ${data.message}`,
+              type: "danger",
+              icon: "danger",
+              autoHide: false,
+            });
+          } else {
+            if (data.areSame) {
+              this.setState({
+                isFetchingCodeData: false,
+                isTheScannedCodeTheCurrent: true,
+              });
+            } else {
+              this.setState({
+                isFetchingCodeData: false,
+                isTheScannedCodeTheCurrent: false,
+              });
+            }
+          }
+        })
+        .catch((err) => {
+          showMessage({
+            message: `Błąd przy próbie porównania kodów: ${err}`,
+            type: "warning",
+            icon: "warning",
+            autoHide: false,
+          });
+        });
+    }
   }
   render() {
     const isFocused = this.props.navigation.isFocused();
@@ -245,6 +323,63 @@ class QRCodeTest extends React.Component<any, any> {
     } else if (isFocused) {
       return (
         <View style={{ flex: 1 }}>
+          <Portal>
+            <Dialog
+              visible={this.state.scanned}
+              onDismiss={() => this.setState({ scanned: false })}
+            >
+              <Dialog.Title
+                accessibilityComponentType="title"
+                accessibilityTraits="title"
+              >
+                Zeskanowano kod
+              </Dialog.Title>
+              <Dialog.Content>
+                <View style={styles.scannedDialogContent}>
+                  {this.state.isError ? (
+                    <Text style={styles.scannedDialogText}>
+                      Błąd - ten kod nie jest prawidłowym kodem do Sleepify
+                    </Text>
+                  ) : (
+                    <>
+                      <Text style={styles.scannedDialogHeader}>Dane kodu</Text>
+                      <Text style={styles.scannedDialogText}>
+                        ID: {this.state.data?.i || "brak"}
+                      </Text>
+                      <Text style={styles.scannedDialogText}>
+                        hash: {this.state.data?.h || "brak"}
+                      </Text>
+                      <Text style={styles.scannedDialogHeader}>Status</Text>
+                      {this.state.isFetchingCodeData ? (
+                        <Text style={styles.dialogLoadingText}>
+                          <ActivityIndicator
+                            accessibilityComponentType="loading"
+                            accessibilityTraits="loading"
+                            color={"white"}
+                          />
+                        </Text>
+                      ) : (
+                        <Text style={styles.scannedDialogText}>
+                          {this.state.isTheScannedCodeTheCurrent
+                            ? "Używany"
+                            : "Nieużywany"}
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </View>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button
+                  accessibilityComponentType="cancel"
+                  accessibilityTraits="cancel"
+                  onPress={() => this.setState({ scanned: false })}
+                >
+                  OK
+                </Button>
+              </Dialog.Actions>
+            </Dialog>
+          </Portal>
           <QRCodeScanner
             onScanned={this.onScanned.bind(this)}
             mount={this.props.navigation.isFocused()}
@@ -255,8 +390,6 @@ class QRCodeTest extends React.Component<any, any> {
   }
 }
 
-//DEV
-//TODO: Fix the camera - it doesn't work, when we change the BOTTOM navigation tabs - add a event listener - when the BOTTOMTAB will change, unmount the camera component
 class QRCodeSetupNavigation extends React.Component<any, any> {
   constructor(props: any) {
     super(props);
