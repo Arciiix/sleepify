@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sleepify</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <style>
+    body {
+      font-family: "Heebo", sans-serif;
+    }
+    .error {
+      display: none;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .errExclamation {
+      font-size: 150px;
+      color: white;
+      font-weight: bold;
+    }
+    .errDescription {
+      margin-left: 20px;
+      font-size: 40px;
+      color: white;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      width: 95vw;
+      height: 95vh;
+    }
+    .content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: auto;
+    }
+    .name {
+      font-size: 100px;
+      z-index: 999;
+      position: relative;
+    }
+    .QRCode {
+      margin: -45px;
+    }
+    .id {
+      font-size: 70px;
+      margin-bottom: -20px;
+    }
+    .generatedDate,
+    .hash {
+      font-size: 15px;
+      color: gray;
+    }
+    .button {
+      position: fixed;
+      bottom: 10px;
+      display: inline-block;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10rem;
+      color: #fff;
+      text-transform: uppercase;
+      font-size: 1rem;
+      letter-spacing: 0.15rem;
+      transition: all 0.3s;
+      overflow: hidden;
+      z-index: 1;
+      width: 400px;
+      cursor: pointer;
+      text-align: center;
+      -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+      -khtml-user-select: none; /* Konqueror HTML */
+      -moz-user-select: none; /* Old versions of Firefox */
+      -ms-user-select: none; /* Internet Explorer/Edge */
+      user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+    }
+    .button:after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0cf;
+      border-radius: 10rem;
+      z-index: -2;
+    }
+    .button:before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background-color: #008fb3;
+      transition: all 0.3s;
+      border-radius: 10rem;
+      z-index: -1;
+    }
+    .button:hover {
+      color: #fff;
+    }
+    .button:hover:before {
+      width: 100%;
+    }
+    @media only screen and (max-width: 700px) {
+      .error {
+        flex-direction: column;
+      }
+      .errDescription {
+        margin-left: 0px;
+      }
+      .errDescription {
+        font-size: 50px;
+      }
+      .errExclamation {
+        font-size: 150px;
+      }
+    }
+    @media only screen and (max-width: 500px) {
+      .button {
+        width: 200px;
+      }
+      .error {
+        flex-direction: column;
+      }
+      .errDescription {
+        margin-left: 0px;
+        font-size: 30px;
+      }
+    }
+
+    @media print {
+      .button {
+        display: none;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+      }
+    }
+  </style>
+
+  <body>
+    <div class="container">
+      <div class="content">
+        <div class="logo">
+          <span class="name">Sleepify</span>
+        </div>
+        <a
+          href="http://192.168.0.107:6456/getQRCode?size=1000"
+          target="_blank"
+          rel="noopener noreferrer"
+          ><img
+            src="http://192.168.0.107:6456/getQRCode?size=400"
+            width="400"
+            class="QRCode"
+        /></a>
+        <span class="id">ID: ?</span>
+        <div class="footer">
+          <span class="generatedDate">?</span>
+          <span class="hash">nie połączono </span>
+        </div>
+        <div class="button">Drukuj</div>
+      </div>
+      <div class="error">
+        <span class="errExclamation">!</span>
+        <span class="errDescription">Błąd przy łączeniu z serwerem!</span>
+      </div>
+    </div>
+    <script>
+      window.addEventListener("load", init);
+      function init() {
+        let date = new Date();
+        let day = addZero(date.getDate());
+        let month = addZero(date.getMonth() + 1);
+
+        let hour = addZero(date.getHours());
+        let minute = addZero(date.getMinutes());
+
+        document.getElementsByClassName(
+          "generatedDate"
+        )[0].innerHTML = `${day}.${month}.${date.getFullYear()} ${hour}:${minute}`;
+
+        document
+          .getElementsByClassName("button")[0]
+          .addEventListener("click", () => window.print());
+
+        document.addEventListener("keyup", (e) => {
+          if (e.key.toLowerCase() === "d" || e.key.toLowerCase() === "p")
+            window.print();
+        });
+
+        fetch("/getLocalData")
+          .then((data) => data.json())
+          .then((data) => {
+            if (!data.qrCodeHash || !data.qrCodeId) {
+              return error();
+            }
+
+            document.getElementsByClassName(
+              "id"
+            )[0].innerHTML = `ID: ${data.qrCodeId}`;
+            document.getElementsByClassName("hash")[0].innerHTML =
+              data.qrCodeHash;
+            //After everything is done without an error, print the page
+            window.print();
+          })
+          .catch((err) => {
+            if (err) {
+              console.error(err);
+              error();
+            }
+          });
+      }
+      function error() {
+        //If app can't fetch the data from the server, show an error
+        document.getElementsByClassName("error")[0].style.display = "flex";
+        document.getElementsByClassName("content")[0].style.display = "none";
+        document.body.style.backgroundColor = "#db0b43";
+      }
+      function addZero(number) {
+        return number < 10 ? `0${number}` : `${number}`;
+      }
+    </script>
+  </body>
+</html>

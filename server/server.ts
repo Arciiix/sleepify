@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import bodyParser from "body-parser";
 import QRCode from "qrcode";
 import crypto from "crypto";
+import path from "path";
 
 const PORT: number | string = process.env.PORT || 6456;
 
@@ -201,6 +202,11 @@ app.post("/setAlarm", async (req, res) => {
   //DEV TODO: Add logs
 });
 
+app.get("/print", (req, res) => {
+  //TODO: Use static path
+  res.sendFile(path.join(__dirname, "pages", "QRCodePrint.min.html"));
+});
+
 app.get("/getLocalData", (req, res) => {
   //Sends local data (doesn't fetch data from alarm - sends the current local storaged (e.g. used in retrieving alarmSettings which aren't stored on the actual alarm, so there's no need to fetch))
   res.send(AlarmdataObject.data);
@@ -218,6 +224,8 @@ app.get("/getQRCode", (req, res) => {
       i: AlarmdataObject.data.qrCodeId,
       h: AlarmdataObject.data.qrCodeHash,
     }; //I - qrCodeId; h - qrCodeHash
+
+    res.setHeader("Content-Type", "image/png");
 
     QRCode.toFileStream(res, JSON.stringify(obj), {
       width: parseInt(req.query.size as string),
