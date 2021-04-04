@@ -5,6 +5,16 @@ import QRCode from "qrcode";
 import crypto from "crypto";
 import path from "path";
 
+//Constants.ts is a file with settings which looks like this
+/*
+const settings = {
+  openWeatherApiKey: "DEV - YOUR API KEY",
+};
+
+export default settings;
+*/
+import constants from "./constants";
+
 const PORT: number | string = process.env.PORT || 6456;
 
 const app: express.Application = express();
@@ -29,6 +39,7 @@ class AlarmData {
   temperature: number = 0;
   temperatureRange: { min: number; max: number } = { min: 20, max: 24 };
   message: string = "";
+  constants: any = constants;
 }
 
 class Alarm {

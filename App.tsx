@@ -13,6 +13,7 @@ import FlashMessage from "react-native-flash-message";
 import Home from "./components/Home/Home";
 import SetAlarm from "./components/SetAlarm/SetAlarm";
 import QRCodeSetup from "./components/QRCodeSetup/QRCodeSetup";
+import AlarmBuzzing from "./components/AlarmBuzzing/AlarmBuzzing";
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -61,6 +62,16 @@ export default class App extends React.Component<any, any> {
                     color={"white"}
                     size={26}
                   />
+                ),
+              }}
+            ></Tab.Screen>
+            <Tab.Screen
+              name="Alarm Buzzing"
+              component={AlarmBuzzing}
+              options={{
+                tabBarLabel: "TEMP",
+                tabBarIcon: () => (
+                  <MaterialIcons name="timelapse" color={"white"} size={26} />
                 ),
               }}
             ></Tab.Screen>
