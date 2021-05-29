@@ -15,6 +15,7 @@ web-build/
 
 # server
 /server/node_modules
-
-# server
 server/constants.ts
+
+# old things, e.g. components
+/OLD/

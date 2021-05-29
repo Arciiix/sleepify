@@ -7,6 +7,7 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 
 import styles from "./Home.styles";
 import settings from "../Settings";
+import Loading from "../Loading/Loading";
 
 //DEV
 import { LogBox } from "react-native";
@@ -242,24 +243,7 @@ class Home extends React.Component<any, HomeState> {
 
   render() {
     if (this.state.isLoading) {
-      //TODO: Make the loading page
-      return (
-        <View style={styles.loadingView}>
-          <ActivityIndicator
-            animating={true}
-            size={100}
-            color={"#ffffff"}
-            accessibilityComponentType={"ActivityIndicator"}
-            accessibilityTraits={"Loading"}
-          />
-          <Text style={styles.loadingText}>Ładowanie...</Text>
-          <Text style={{ color: "white", fontSize: 30, textAlign: "center" }}>
-            {" "}
-            {/* DEV TODO */}
-            DEV - This screen isn't finished yet
-          </Text>
-        </View>
-      );
+      return <Loading />;
     } else {
       return (
         <View style={styles.container}>

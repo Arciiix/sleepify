@@ -6,6 +6,13 @@ import { withTheme, ActivityIndicator, Button } from "react-native-paper";
 import { showMessage } from "react-native-flash-message";
 
 import styles from "./AlarmBuzzing.styles";
+import TurnAlarmOffByScan from "./TurnAlarmOffByScan/TurnAlarmOffByScan";
+import Loading from "../Loading/Loading";
+import ScanAlarmQRCode from "./TurnAlarmOffByScan/ScanAlarmQRCode/ScanAlarmQRCode";
+
+import { createStackNavigator } from "@react-navigation/stack";
+
+const Stack = createStackNavigator();
 
 enum daysOfWeek {
   Niedziela,
@@ -31,7 +38,7 @@ interface AlarmBuzzingState {
   snoozeLength?: number;
 }
 
-class AlarmBuzzing extends React.Component<any, AlarmBuzzingState> {
+class AlarmBuzzingScreen extends React.Component<any, AlarmBuzzingState> {
   constructor(props: any) {
     super(props);
     this.state = {
@@ -201,23 +208,7 @@ class AlarmBuzzing extends React.Component<any, AlarmBuzzingState> {
   render() {
     if (this.state.isLoading) {
       //TODO: Make the loading page
-      return (
-        <View style={styles.loadingView}>
-          <ActivityIndicator
-            animating={true}
-            size={100}
-            color={"#ffffff"}
-            accessibilityComponentType={"ActivityIndicator"}
-            accessibilityTraits={"Loading"}
-          />
-          <Text style={styles.loadingText}>Ładowanie...</Text>
-          <Text style={{ color: "white", fontSize: 30, textAlign: "center" }}>
-            {" "}
-            {/* DEV TODO */}
-            DEV - This screen isn't finished yet
-          </Text>
-        </View>
-      );
+      return <Loading />;
     } else {
       return (
         <View style={styles.container}>
@@ -290,6 +281,9 @@ class AlarmBuzzing extends React.Component<any, AlarmBuzzingState> {
               onPress={() => {
                 //DEV TODO: Dismissing alarms
                 console.log("Pressed the alarm dismiss button");
+                this.props.navigation.navigate("TurnOffByQRCode", {
+                  QRCodeData: null,
+                });
               }}
             >
               Wyłącz
@@ -301,4 +295,55 @@ class AlarmBuzzing extends React.Component<any, AlarmBuzzingState> {
   }
 }
 
-export default withTheme(AlarmBuzzing);
+class QRCodeSetupNavigation extends React.Component<any, any> {
+  constructor(props: any) {
+    super(props);
+    this.state = { mount: true };
+  }
+
+  componentDidMount() {
+    this.props.navigation.addListener("blur", () => {
+      this.setState({ mount: false });
+    });
+    this.props.navigation.addListener("focus", () => {
+      this.setState({ mount: true });
+    });
+  }
+  render() {
+    if (this.state.mount) {
+      return (
+        <Stack.Navigator initialRouteName={"AlarmBuzzingScreen"}>
+          <Stack.Screen
+            name="AlarmBuzzingScreen"
+            component={withTheme(AlarmBuzzingScreen)}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="TurnOffByQRCode"
+            component={
+              TurnAlarmOffByScan
+            } /* DEV TODO: Check whether the QR Code is enabled - if so, then go to TurnAlarmOffByScan component, otherwise - just turn off the alarm */
+            options={{
+              title: "Wyłącz alarm",
+            }}
+          />
+          <Stack.Screen
+            name="ScanAlarmQRCode"
+            component={
+              ScanAlarmQRCode
+            } /* DEV TODO: Check whether the QR Code is enabled - if so, then go to TurnAlarmOffByScan component, otherwise - just turn off the alarm */
+            options={{
+              title: "Wyłącz alarm",
+            }}
+          />
+        </Stack.Navigator>
+      );
+    } else {
+      return null;
+    }
+  }
+}
+
+export default QRCodeSetupNavigation;
