@@ -39,6 +39,7 @@ export default StyleSheet.create({
     width: "100%",
   },
   hashInput: {
+    marginTop: 10,
     width: "80%",
   },
   QRCodeIDText: {

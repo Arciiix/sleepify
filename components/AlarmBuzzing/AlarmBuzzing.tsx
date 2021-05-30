@@ -9,6 +9,7 @@ import styles from "./AlarmBuzzing.styles";
 import TurnAlarmOffByScan from "./TurnAlarmOffByScan/TurnAlarmOffByScan";
 import Loading from "../Loading/Loading";
 import ScanAlarmQRCode from "./TurnAlarmOffByScan/ScanAlarmQRCode/ScanAlarmQRCode";
+import { turnTheAlarmOff } from "../TurnTheAlarmOff";
 
 import { createStackNavigator } from "@react-navigation/stack";
 
@@ -33,6 +34,7 @@ interface AlarmBuzzingState {
   time: { hour: number; minute: number };
   dayOfTheWeek: string;
   date: string;
+  isQRCodeEnabled: boolean;
   message: string;
   isSnoozeEnabled: boolean;
   snoozeLength?: number;
@@ -50,6 +52,7 @@ class AlarmBuzzingScreen extends React.Component<any, AlarmBuzzingState> {
       time: { hour: 0, minute: 0 },
       dayOfTheWeek: "",
       date: "",
+      isQRCodeEnabled: false,
       message: "",
       isSnoozeEnabled: false,
       snoozeLength: 0,
@@ -84,6 +87,7 @@ class AlarmBuzzingScreen extends React.Component<any, AlarmBuzzingState> {
               message: data.message,
               isSnoozeEnabled: data.isSnoozeEnabled,
               snoozeLength: data.snoozeLength,
+              isQRCodeEnabled: data.isQRCodeEnabled,
 
               date: `${this.addZero(date.getDate())}.${this.addZero(
                 date.getMonth() + 1
@@ -205,6 +209,30 @@ class AlarmBuzzingScreen extends React.Component<any, AlarmBuzzingState> {
     }
   }
 
+  async turnOffTheAlarm() {
+    let turningOffStatus = await turnTheAlarmOff();
+    if (!turningOffStatus.error) {
+      //Success
+      //TODO: Make a success page
+
+      //DEV
+      showMessage({
+        message: `Wyłączono alarm!`,
+        type: "success",
+        icon: "success",
+        autoHide: true,
+        floating: true,
+      });
+    } else {
+      showMessage({
+        message: `${turningOffStatus.message}`,
+        type: "danger",
+        icon: "danger",
+        autoHide: false,
+      });
+    }
+  }
+
   render() {
     if (this.state.isLoading) {
       //TODO: Make the loading page
@@ -279,11 +307,13 @@ class AlarmBuzzingScreen extends React.Component<any, AlarmBuzzingState> {
               color="#eb4d4b"
               labelStyle={{ color: "white" }}
               onPress={() => {
-                //DEV TODO: Dismissing alarms
-                console.log("Pressed the alarm dismiss button");
-                this.props.navigation.navigate("TurnOffByQRCode", {
-                  QRCodeData: null,
-                });
+                if (this.state.isQRCodeEnabled) {
+                  this.props.navigation.navigate("TurnOffByQRCode", {
+                    QRCodeData: null,
+                  });
+                } else {
+                  this.turnOffTheAlarm();
+                }
               }}
             >
               Wyłącz

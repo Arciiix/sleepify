@@ -7,6 +7,7 @@ import styles from "./TurnAlarmOffByScan.styles";
 
 import { showMessage } from "react-native-flash-message";
 import Loading from "../../Loading/Loading";
+import { turnTheAlarmOff } from "../../TurnTheAlarmOff";
 
 interface TurnAlarmOffByScanState {
   isLoading: boolean;
@@ -43,7 +44,7 @@ class TurnAlarmOffByScan extends React.Component<any, TurnAlarmOffByScanState> {
   componentDidMount() {
     this.getData();
 
-    this.props.navigation.addListener("focus", () => {
+    this.props.navigation.addListener("focus", (): void => {
       if (this.props.route.params.QRCodeData) {
         this.setState({ QRCodeHash: this.props.route.params.QRCodeData.h });
       }
@@ -80,6 +81,37 @@ class TurnAlarmOffByScan extends React.Component<any, TurnAlarmOffByScanState> {
 
   addZero(number: number): string {
     return number < 10 ? `0${number}` : `${number}`;
+  }
+
+  async turnOffTheAlarm(): Promise<void> {
+    //Check if user has scanned the QR code or typed something in the input
+    if (!this.state.QRCodeHash) return;
+
+    //Try to turn off the alarm
+    let turningOffStatus = await turnTheAlarmOff({
+      i: this.state.QRCodeID,
+      h: this.state.QRCodeHash,
+    });
+    if (!turningOffStatus.error) {
+      //Success
+      //TODO: Make a success page
+
+      //DEV
+      showMessage({
+        message: `Wyłączono alarm!`,
+        type: "success",
+        icon: "success",
+        autoHide: true,
+        floating: true,
+      });
+    } else {
+      showMessage({
+        message: `${turningOffStatus.message}`,
+        type: "danger",
+        icon: "danger",
+        autoHide: false,
+      });
+    }
   }
 
   render() {
@@ -138,8 +170,7 @@ class TurnAlarmOffByScan extends React.Component<any, TurnAlarmOffByScanState> {
                 accessibilityTraits={"Button"}
                 accessibilityComponentType={"Button"}
                 onPress={() => {
-                  //DEV TODO: Turn off the alarm (unless the code isn't scanned yet, so the input is empty)
-                  return null;
+                  this.turnOffTheAlarm.apply(this);
                 }}
               >
                 <Text>Wyłącz</Text>

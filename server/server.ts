@@ -282,6 +282,40 @@ app.get("/checkQRCode", (req, res) => {
   }
 });
 
+app.put("/turnTheAlarmOff", (req, res) => {
+  /*
+Request pattern:
+{err: boolean, message?: string}
+
+Possible response statuses:
+204 - success - the alarm has been turned off
+400 - wrong request - the app didn't send the QR code hash or id.
+401 - wrong QR code
+*/
+
+  if (AlarmdataObject.data.isQRCodeEnabled) {
+    //If the QR code is enabled, check if user has provided particular data (code id and hash)
+    if (!req.body.h || !req.body.i) {
+      return res.status(400).send({ err: true, message: "WRONG_REQ" });
+    }
+
+    //Check if the QR code (that user has scanned) matches the current one
+    if (
+      req.body.h !== AlarmdataObject.data.qrCodeHash ||
+      req.body.i !== AlarmdataObject.data.qrCodeId
+    ) {
+      return res.status(401).send({ err: true, message: "WRONG_QR" });
+    }
+  }
+
+  //TODO: Check for recovery key as well
+  //DEV TODO: Turn off the alarm
+
+  log(`Turned off the alarm`);
+
+  res.status(204).send({ err: false });
+});
+
 function addZero(number: number): string {
   return number < 10 ? `0${number}` : `${number}`;
 }
