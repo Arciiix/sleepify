@@ -53,12 +53,10 @@ class ScanAlarmQRCode extends React.Component<any, any> {
       return null;
     } else if (isFocused) {
       return (
-        <View style={styles.container}>
-          <QRCodeScanner
-            onScanned={this.onScanned.bind(this)}
-            mount={this.props.navigation.isFocused()}
-          />
-        </View>
+        <QRCodeScanner
+          onScanned={this.onScanned.bind(this)}
+          mount={this.props.navigation.isFocused()}
+        />
       );
     }
   }
